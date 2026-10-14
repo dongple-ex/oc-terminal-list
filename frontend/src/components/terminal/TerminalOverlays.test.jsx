@@ -150,9 +150,15 @@ describe('TerminalContextMenu', () => {
     vi.useRealTimers();
   });
 
+  // Desktop drag already auto-copies, so the item could never do anything there.
+  it('데스크탑에서는 선택 복사를 보이지 않는다', () => {
+    render(<TerminalContextMenu {...baseProps()} hasSelection={true} />);
+    expect(screen.queryByRole('button', { name: 'mobileCopySelection' })).toBeNull();
+  });
+
   it('선택이 없으면 선택 복사를 비활성화하고 실행하지 않는다', () => {
     const props = baseProps();
-    render(<TerminalContextMenu {...props} />);
+    render(<TerminalContextMenu {...props} isMobile readOnly />);
     const copy = screen.getByRole('button', { name: 'mobileCopySelection' });
     expect(copy).toBeDisabled();
     fireEvent.click(copy);
@@ -180,7 +186,7 @@ describe('TerminalContextMenu', () => {
   });
 
   it('선택 복사를 전체 복사 바로 아래에 둔다', () => {
-    render(<TerminalContextMenu {...baseProps()} hasSelection={true} />);
+    render(<TerminalContextMenu {...baseProps()} isMobile readOnly hasSelection={true} />);
     const copyAll = screen.getByRole('button', { name: 'copyAll' });
     const copy = screen.getByRole('button', { name: 'mobileCopySelection' });
     expect(copy).toBeEnabled();
@@ -227,7 +233,7 @@ describe('TerminalContextMenu', () => {
 
   it('항목을 누르면 그 액션이 실행된다', () => {
     const props = baseProps();
-    render(<TerminalContextMenu {...props} hasSelection={true} />);
+    render(<TerminalContextMenu {...props} isMobile readOnly hasSelection={true} />);
 
     fireEvent.click(screen.getByText('mobileCopySelection'));
     expect(props.onCopy).toHaveBeenCalled();

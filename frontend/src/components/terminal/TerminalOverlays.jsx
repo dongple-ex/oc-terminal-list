@@ -226,14 +226,17 @@ export const TerminalContextMenu = ({ x, y, hasSelection, linkUrl, themeUi, t, o
     items.push({ icon: LinkIcon, label: t('copyLink') || 'Copy link', action: onCopyLink });
   }
   items.push({ icon: Scissors, label: t('copyAll') || 'Copy all', action: onCopyAll });
-  // Phone in input mode with nothing selected: the item leads into view mode, the only place drag-select exists.
-  const canEnterSelectMode = !hasSelection && isMobile && !readOnly && onEnterSelectMode;
-  items.push({
-    icon: Copy,
-    label: t('mobileCopySelection') || 'Copy selection',
-    action: canEnterSelectMode ? onEnterSelectMode : onCopy,
-    disabled: !hasSelection && !canEnterSelectMode,
-  });
+  // Desktop drag already auto-copies, so the item is phone-only. In input mode with nothing
+  // selected it leads into view mode, the only place drag-select exists.
+  if (isMobile) {
+    const canEnterSelectMode = !hasSelection && !readOnly && onEnterSelectMode;
+    items.push({
+      icon: Copy,
+      label: t('mobileCopySelection') || 'Copy selection',
+      action: canEnterSelectMode ? onEnterSelectMode : onCopy,
+      disabled: !hasSelection && !canEnterSelectMode,
+    });
+  }
   if (hasSelection && readOnly && onUseSelection) {
     items.push({ icon: ClipboardPaste, label: t('selectionToInput') || 'Use in quick input', action: onUseSelection });
   }
