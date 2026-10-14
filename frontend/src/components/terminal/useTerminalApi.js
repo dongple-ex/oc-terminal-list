@@ -88,7 +88,9 @@ const useTerminalApi = ({ refs, forwardedRef, sessionId, paneId, tabId, isReady 
       return finishViewingRef?.current?.({ toBottom: true }) ?? false;
     }
     forceScrollToBottomRef.current?.();
-    return true;
+    // tmux scrolls in its own copy-mode, invisible to xterm, so leave that too. Plain offset 0,
+    // not the view-mode "bottom" action: that sends Esc to a mouse app and interrupts an agent.
+    return finishViewingRef?.current?.() ?? true;
   }, [forceScrollToBottomRef, readOnlyRef, finishViewingRef, xtermRef]);
 
   /* 페이지/라인 단위 스크롤 — xterm 의 클라이언트 스크롤백만 만진다.

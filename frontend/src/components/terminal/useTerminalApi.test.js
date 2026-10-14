@@ -301,6 +301,22 @@ describe('useTerminalApi', () => {
       api().scrollToBottom();
       expect(scrollToBottom).toHaveBeenCalled();
     });
+
+    /* tmux scrolls in its own copy-mode, which xterm cannot see — the quick-bar key did
+       nothing in input mode. It must also leave copy-mode, but never with the view-mode
+       "bottom" action: that sends Esc to a mouse app, which interrupts a running agent. */
+    it('입력 모드에서도 tmux 기록 보기를 빠져나온다 — 앱에 Esc 는 보내지 않는다', async () => {
+      const { refs, scrollToBottom } = setup();
+      const restore = vi.fn(async () => true);
+      refs.finishViewingRef = { current: restore };
+      const hook = renderHook(() => useTerminalApi({ refs, sessionId: 'live', isReady: true }));
+
+      expect(await api('live').scrollToBottom()).toBe(true);
+      expect(scrollToBottom).toHaveBeenCalled();
+      expect(restore).toHaveBeenCalledOnce();
+      expect(restore).not.toHaveBeenCalledWith({ toBottom: true });
+      hook.unmount();
+    });
   });
 
   describe('버퍼 읽기 / 복사', () => {

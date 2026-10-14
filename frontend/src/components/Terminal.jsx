@@ -39,6 +39,7 @@ import {
 } from './terminal/TerminalStatusCards';
 import { reportPaneFailure, clearPaneFailure } from '../utils/paneFailure';
 import attachTerminalFileDrop from './terminal/attachTerminalFileDrop';
+import restoreLiveOutput from './terminal/restoreLiveOutput';
 import attachIosHangulInput from './terminal/attachIosHangulInput';
 import attachImeTextareaGuard from './terminal/attachImeTextareaGuard';
 import { probeSpacingMs, claimProbeLease, releaseProbeLease } from './terminal/outageProbe';
@@ -596,6 +597,16 @@ const TerminalComponent = forwardRef(({ sessionId, hostId, isMobile = false, tmu
   const [muxMissing, setMuxMissing] = useState(null);
   const [activeMultiplexer, setActiveMultiplexer] = useState(null);
   const selectedMultiplexer = normalizeMultiplexer(paneMultiplexer, settings.defaultMultiplexer);
+  // TerminalScrollbar owns finishViewingRef only while it runs; until then a bottom request
+  // must still reach tmux copy-mode. Read live values — the multiplexer is known only after attach.
+  const liveRestoreRef = useRef(null);
+  liveRestoreRef.current = { sessionId, hostId, tmux: (activeMultiplexer || selectedMultiplexer) === TMUX };
+  if (!finishViewingRef.current) {
+    finishViewingRef.current = (options) => {
+      const live = liveRestoreRef.current;
+      return live.tmux ? restoreLiveOutput(live.sessionId, live.hostId, options) : true;
+    };
+  }
   const [copyFlash, setCopyFlash] = useState(false);
   const [edgeGutter, setEdgeGutter] = useState({ right: 0, bottom: 0 });
   const edgeGutterRef = useRef(edgeGutter);
