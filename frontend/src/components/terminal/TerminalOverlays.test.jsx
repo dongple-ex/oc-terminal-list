@@ -159,6 +159,26 @@ describe('TerminalContextMenu', () => {
     expect(props.onCopy).not.toHaveBeenCalled();
   });
 
+  /* Drag-select only exists in view mode, and nothing else leads back there once a key
+     has switched the phone to input mode — this item is that way back. */
+  it('모바일 입력 모드에서 선택이 없으면 선택 복사가 끌어서 고르는 모드로 들어간다', () => {
+    const props = { ...baseProps(), isMobile: true, readOnly: false, onEnterSelectMode: vi.fn() };
+    render(<TerminalContextMenu {...props} />);
+    const copy = screen.getByRole('button', { name: 'mobileCopySelection' });
+    expect(copy).not.toBeDisabled();
+    fireEvent.click(copy);
+    expect(props.onEnterSelectMode).toHaveBeenCalledTimes(1);
+    expect(props.onCopy).not.toHaveBeenCalled();
+  });
+
+  it('선택이 있으면 모바일 입력 모드에서도 바로 복사한다', () => {
+    const props = { ...baseProps(), isMobile: true, readOnly: false, hasSelection: true, onEnterSelectMode: vi.fn() };
+    render(<TerminalContextMenu {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: 'mobileCopySelection' }));
+    expect(props.onCopy).toHaveBeenCalledTimes(1);
+    expect(props.onEnterSelectMode).not.toHaveBeenCalled();
+  });
+
   it('선택 복사를 전체 복사 바로 아래에 둔다', () => {
     render(<TerminalContextMenu {...baseProps()} hasSelection={true} />);
     const copyAll = screen.getByRole('button', { name: 'copyAll' });

@@ -845,6 +845,16 @@ function App() {
       setInputModePending(false);
     }
   });
+  /* Drag-select lives only in view mode, and any key flips the phone to input mode
+     (persisted) — "Copy selection" with nothing selected is the way back. */
+  const enterMobileSelectMode = useEvent(() => {
+    setMobileViewOnly(true);
+    setNotification({ isOpen: true, message: t('mobileSelectionHint'), type: 'info' });
+  });
+  useEffect(() => {
+    window.addEventListener('iterm:mobile-select-mode', enterMobileSelectMode);
+    return () => window.removeEventListener('iterm:mobile-select-mode', enterMobileSelectMode);
+  }, [enterMobileSelectMode]);
   const openCommandInput = useEvent(() => {
     if (isMobile && mobileViewOnly) { enableMobileInput(true); return; }
     setCommandInputOpen(true);
@@ -1249,6 +1259,7 @@ function App() {
               if (type === 'copy') {
                 const sel = session.getSelection?.();
                 if (sel) copyAndTell(sel);
+                else if (isMobile && !mobileViewOnly) enterMobileSelectMode();
                 else setNotification({ isOpen: true, message: isMobile && mobileViewOnly ? t('mobileSelectionHint') : (t('noSelection') || 'No text selected'), type: 'info' });
               } else if (type === 'copyAll') {
                 const text = session.getBufferText?.() || '';

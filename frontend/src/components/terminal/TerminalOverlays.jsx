@@ -175,7 +175,7 @@ export const AuthPromptOverlay = ({ prompt, themeUi, t, onSubmit, onCancel }) =>
   );
 };
 
-export const TerminalContextMenu = ({ x, y, hasSelection, linkUrl, themeUi, t, onCopy, onUseSelection, onCopyLink, onCopyAll, onPaste, onPasteToInput, onRefresh, onScrollToBottom, onUploadFile, onScreenDump, onClose, readOnly = false, isMobile = false }) => {
+export const TerminalContextMenu = ({ x, y, hasSelection, linkUrl, themeUi, t, onCopy, onUseSelection, onCopyLink, onCopyAll, onPaste, onPasteToInput, onRefresh, onScrollToBottom, onUploadFile, onScreenDump, onClose, onEnterSelectMode, readOnly = false, isMobile = false }) => {
   const ref = useRef(null);
   const [pos, setPos] = useState({ x, y });
   const [measured, setMeasured] = useState(false);
@@ -226,7 +226,14 @@ export const TerminalContextMenu = ({ x, y, hasSelection, linkUrl, themeUi, t, o
     items.push({ icon: LinkIcon, label: t('copyLink') || 'Copy link', action: onCopyLink });
   }
   items.push({ icon: Scissors, label: t('copyAll') || 'Copy all', action: onCopyAll });
-  items.push({ icon: Copy, label: t('mobileCopySelection') || 'Copy selection', action: onCopy, disabled: !hasSelection });
+  // Phone in input mode with nothing selected: the item leads into view mode, the only place drag-select exists.
+  const canEnterSelectMode = !hasSelection && isMobile && !readOnly && onEnterSelectMode;
+  items.push({
+    icon: Copy,
+    label: t('mobileCopySelection') || 'Copy selection',
+    action: canEnterSelectMode ? onEnterSelectMode : onCopy,
+    disabled: !hasSelection && !canEnterSelectMode,
+  });
   if (hasSelection && readOnly && onUseSelection) {
     items.push({ icon: ClipboardPaste, label: t('selectionToInput') || 'Use in quick input', action: onUseSelection });
   }
