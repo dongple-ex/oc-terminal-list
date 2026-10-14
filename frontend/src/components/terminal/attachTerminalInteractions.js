@@ -371,11 +371,14 @@ const attachTerminalInteractions = ({
   };
   const handleNaturalMouseUp = (e) => {
     if (!naturalSelection) return;
-    if (naturalSelection.selecting) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+    const wasSelecting = naturalSelection.selecting;
     naturalSelection = null;
+    if (!wasSelecting) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // stopPropagation also starves the document mouseup below, so copy here while the
+    // gesture is still live — otherwise only the late settle timer runs, and browsers refuse it.
+    handleSelectionGestureEnd();
   };
 
   /* Any mouse-up over the terminal ends a selection gesture — including xterm's own

@@ -643,6 +643,20 @@ describe('attachTerminalInteractions', () => {
       move(250, 130);
       expect(term.select).not.toHaveBeenCalled();
     });
+
+    /* The capture-phase mouseup stops propagation so tmux never sees the drag end —
+       which also starved the document mouseup that copies inside the gesture. In a
+       tmux pane only the late settle timer was left, and that is the one browsers refuse. */
+    it('tmux 안에서 끌어 고른 것도 마우스를 떼는 그 순간에 복사한다', async () => {
+      term.getSelection = vi.fn(() => 'dragged in tmux');
+      mount();
+      down(50, 50);
+      move(150, 90);
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+      await Promise.resolve();
+
+      expect(copyTextToClipboard).toHaveBeenCalledWith('dragged in tmux');
+    });
   });
 
   describe('detach', () => {
