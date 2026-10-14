@@ -1,6 +1,6 @@
 import { cloneElement, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { MessageSquare, ClipboardPaste, Copy, FileText, Settings, Check, ArrowDownToLine } from 'lucide-react';
+import { MessageSquare, ClipboardPaste, Copy, FileText, Settings, Check, ChevronsDown } from 'lucide-react';
 import useTranslation from '../hooks/useTranslation';
 import { tokens } from '../styles/tokens';
 import { mobileKeysFor, sanitizeMobileKeys, splitPinnedAndScroll } from '../utils/mobileKeys';
@@ -19,7 +19,7 @@ const DEFAULT_ICON_FOR_KIND = {
   paste: ClipboardPaste,
   copy: Copy,
   copyAll: FileText,
-  scrollToBottom: ArrowDownToLine,
+  scrollToBottom: ChevronsDown,
 };
 
 const { color, font, fontSize, fontWeight, space, motion } = tokens;

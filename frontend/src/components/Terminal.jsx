@@ -600,7 +600,9 @@ const TerminalComponent = forwardRef(({ sessionId, hostId, isMobile = false, tmu
   // TerminalScrollbar owns finishViewingRef only while it runs; until then a bottom request
   // must still reach tmux copy-mode. Read live values — the multiplexer is known only after attach.
   const liveRestoreRef = useRef(null);
-  liveRestoreRef.current = { sessionId, hostId, tmux: (activeMultiplexer || selectedMultiplexer) === TMUX };
+  // Remote panes scroll the remote tmux session by its own name, not the app session id.
+  const scrollSessionId = hostId ? (effectiveTmuxSession || tmuxSessionName) : sessionId;
+  liveRestoreRef.current = { sessionId: scrollSessionId, hostId, tmux: (activeMultiplexer || selectedMultiplexer) === TMUX };
   if (!finishViewingRef.current) {
     finishViewingRef.current = (options) => {
       const live = liveRestoreRef.current;
@@ -2312,7 +2314,7 @@ const TerminalComponent = forwardRef(({ sessionId, hostId, isMobile = false, tmu
       <TerminalScrollbar
         xtermRef={xtermRef}
         fitNowRef={fitNowRef}
-        sessionId={hostId ? (effectiveTmuxSession || tmuxSessionName) : sessionId}
+        sessionId={scrollSessionId}
         hostId={hostId}
         enabled={readOnly || settings.showTerminalScrollbar === true}
         readOnly={readOnly}

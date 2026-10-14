@@ -65,7 +65,7 @@ describe('MobileToolbar quick input', () => {
     const bottom = screen.getByTitle('Scroll to Bottom');
     expect(container.querySelector('.mobile-toolbar-scroll button:last-child')).toBe(bottom);
     expect(bottom.textContent).toBe('');
-    expect(bottom.querySelector('.lucide-arrow-down-to-line')).toBeInTheDocument();
+    expect(bottom.querySelector('.lucide-chevrons-down')).toBeInTheDocument();
     fireEvent.click(bottom);
     expect(onAction).toHaveBeenCalledExactlyOnceWith('scrollToBottom');
     expect(onSendKey).not.toHaveBeenCalled();

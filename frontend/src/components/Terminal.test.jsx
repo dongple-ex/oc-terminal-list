@@ -393,6 +393,25 @@ describe('Terminal', () => {
       ).toBe(true));
     });
 
+    /* The scrollbar is off (desktop default) so the fallback path runs — it used to send the
+       app session id, which the remote tmux has never heard of, and came back 409. */
+    it('원격 tmux pane 의 맨 아래로는 원격 세션 이름으로 요청한다', async () => {
+      global.fetch = vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ available: true, history: 50, offset: 0, rows: 24 }),
+      }));
+      renderTerminal({ sessionId: 'app-sess', hostId: 'h1', tmuxSessionName: 'mobile-abc', paneMultiplexer: 'tmux' });
+      await openSocket();
+      await waitFor(() => expect(window.terminalSessions?.['app-sess']).toBeTruthy());
+
+      let ok;
+      await act(async () => { ok = await window.terminalSessions['app-sess'].scrollToBottom(); });
+
+      expect(ok).toBe(true);
+      const call = global.fetch.mock.calls.find(([url]) => String(url).startsWith('/api/terminal-scroll'));
+      expect(JSON.parse(call[1].body)).toMatchObject({ session_id: 'mobile-abc', host_id: 'h1', offset: 0 });
+    });
+
     it('passes the exact view-mode selection and source to quick input without sending terminal input', async () => {
       renderTerminal({ paneId: 'source-pane', tabId: 'source-tab', isMobile: true,
         settings: { ...testSettings(), language: 'ko', mobileViewOnly: true } });

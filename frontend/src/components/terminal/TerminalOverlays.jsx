@@ -7,7 +7,7 @@
  * Terminal.jsx 에서 로직 변경 없이 추출.
  */
 import { useState, useLayoutEffect, useRef } from 'react';
-import { Copy, ClipboardPaste, Scissors, ArrowDownToLine, RefreshCw, KeyRound, Upload, Link as LinkIcon, FileText } from 'lucide-react';
+import { Copy, ClipboardPaste, Scissors, ChevronsDown, RefreshCw, KeyRound, Upload, Link as LinkIcon, FileText } from 'lucide-react';
 import { tokens } from '../../styles/tokens';
 import { MOBILE_CONTROL } from '../../styles/mobileControl';
 import { glassDividerStyle, glassMenuStyle } from '../../styles/glass';
@@ -252,7 +252,7 @@ export const TerminalContextMenu = ({ x, y, hasSelection, linkUrl, themeUi, t, o
   if (onRefresh) {
     items.push({ icon: RefreshCw, label: t('refresh') || 'Refresh', action: onRefresh });
   }
-  items.push({ icon: ArrowDownToLine, label: t('scrollToBottom') || 'Scroll to bottom', action: onScrollToBottom });
+  items.push({ icon: ChevronsDown, label: t('scrollToBottom') || 'Scroll to bottom', action: onScrollToBottom });
   if (onScreenDump) {
     items.push({ icon: FileText, label: t('viewAsText') || 'View as text', action: onScreenDump });
   }

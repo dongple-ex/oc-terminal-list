@@ -3,7 +3,7 @@ import {
   Plus, Trash2, ArrowUp, ArrowDown, RotateCcw, Sparkles, ChevronUp,
   ChevronDown, MessageSquare, ClipboardPaste, Image as ImageIcon, X as XIcon,
   Copy, FileText, ArrowLeft, ArrowRight, CornerDownLeft, Home, Keyboard, Terminal,
-  GripVertical, ArrowDownToLine,
+  GripVertical, ChevronsDown,
 } from 'lucide-react';
 import { tokens } from '../styles/tokens';
 import { DEFAULT_MOBILE_KEYS, KEY_PRESETS, decodeUserPayload, mobileKeysFor } from '../utils/mobileKeys';
@@ -62,7 +62,7 @@ const DEFAULT_ICON_FOR_KIND = {
   paste: ClipboardPaste,
   copy: Copy,
   copyAll: FileText,
-  scrollToBottom: ArrowDownToLine,
+  scrollToBottom: ChevronsDown,
 };
 
 const PAYLOAD_META = {
