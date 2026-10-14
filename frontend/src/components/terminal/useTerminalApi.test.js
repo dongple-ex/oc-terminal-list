@@ -317,6 +317,38 @@ describe('useTerminalApi', () => {
       expect(restore).not.toHaveBeenCalledWith({ toBottom: true });
       hook.unmount();
     });
+
+    /* claude/opencode scroll their own transcript (alt screen + mouse), so leaving tmux
+       copy-mode changes nothing on screen. Wheel-down reaches any mouse app and, unlike
+       Esc, never interrupts a running agent. */
+    it('마우스를 쓰는 앱에는 휠을 아래로 굴려 보낸다', async () => {
+      vi.useFakeTimers();
+      try {
+        const term = makeTerm();
+        term.modes = { mouseTrackingMode: 'any' };
+        term.cols = 80; term.rows = 24;
+        const { enqueue } = setup({ term });
+        api().scrollToBottom();
+        await vi.advanceTimersByTimeAsync(1000);
+        const sent = enqueue.mock.calls.map(([payload]) => payload).join('');
+        const reports = sent.match(/\x1b\[<65;40;12M/g) || [];
+        expect(reports.length).toBeGreaterThanOrEqual(100);
+        expect(sent).not.toContain('\x1b[<64');
+        expect(sent.replace(/\x1b\[<65;40;12M/g, '')).toBe('');
+      } finally { vi.useRealTimers(); }
+    });
+
+    it('마우스를 안 쓰는 화면에는 휠을 보내지 않는다', async () => {
+      vi.useFakeTimers();
+      try {
+        const term = makeTerm();
+        term.modes = { mouseTrackingMode: 'none' };
+        const { enqueue } = setup({ term });
+        api().scrollToBottom();
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(enqueue).not.toHaveBeenCalled();
+      } finally { vi.useRealTimers(); }
+    });
   });
 
   describe('버퍼 읽기 / 복사', () => {
