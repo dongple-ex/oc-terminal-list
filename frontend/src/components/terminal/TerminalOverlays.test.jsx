@@ -177,7 +177,7 @@ describe('TerminalContextMenu', () => {
     expect(props.onCopy).not.toHaveBeenCalled();
   });
 
-  it('모바일 선택 모드에서는 같은 항목이 "선택 끝" 이 되어 모드를 끝낸다', () => {
+  it('모바일 선택 모드에서는 같은 항목이 "선택 복사 종료" 이 되어 모드를 끝낸다', () => {
     const props = { ...baseProps(), isMobile: true, readOnly: true, onExitSelectMode: vi.fn() };
     render(<TerminalContextMenu {...props} />);
     expect(screen.queryByRole('button', { name: 'mobileCopySelection' })).toBeNull();

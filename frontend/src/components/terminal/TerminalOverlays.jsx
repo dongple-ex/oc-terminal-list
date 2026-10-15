@@ -230,7 +230,7 @@ export const TerminalContextMenu = ({ x, y, hasSelection, linkUrl, themeUi, t, o
   // selected it leads into view mode, the only place drag-select exists.
   if (isMobile && readOnly && onExitSelectMode) {
     // Select mode: the same item is the way out (copies whatever is selected first).
-    items.push({ icon: Check, label: t('mobileSelectDone') || 'Done selecting', action: onExitSelectMode });
+    items.push({ icon: Check, label: t('mobileSelectDone') || 'Exit copy selection', action: onExitSelectMode });
   } else if (isMobile) {
     const canEnterSelectMode = !hasSelection && !readOnly && onEnterSelectMode;
     items.push({

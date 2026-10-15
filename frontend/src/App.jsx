@@ -1263,7 +1263,7 @@ function App() {
               });
               if (type === 'copy') {
                 const sel = session.getSelection?.();
-                // In select mode this key is "Done selecting": copy what's selected, then leave.
+                // In select mode this key is "Exit copy selection": copy what's selected, then leave.
                 if (isMobile && mobileViewOnly) {
                   if (sel) copyAndTell(sel);
                   enableMobileInput(false);

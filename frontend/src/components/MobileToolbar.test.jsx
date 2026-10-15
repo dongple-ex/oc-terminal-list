@@ -37,7 +37,7 @@ describe('MobileToolbar quick input', () => {
     expect(screen.getByTitle('Quick Input')).toBeInTheDocument();
     expect(screen.getByText('ESC')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Switch to input mode' })).toBeNull();
-    fireEvent.click(screen.getByTitle('Done selecting'));
+    fireEvent.click(screen.getByTitle('Exit copy selection'));
     expect(onAction).toHaveBeenCalledWith('copy');
     expect(container.querySelector('.mobile-toolbar-scroll .lucide-settings')).toBeNull();
     const picker = screen.getByRole('button', { name: 'Choose quick bar set' });
@@ -55,15 +55,15 @@ describe('MobileToolbar quick input', () => {
   });
   /* "Copy selection" drops the phone into select mode; the same key must say how to get
      out again and do it — there was no way back before. */
-  it('선택 모드에서는 같은 키가 눌린 상태로 "선택 끝" 을 보여준다', () => {
+  it('선택 모드에서는 같은 키가 눌린 상태로 "선택 복사 종료" 을 보여준다', () => {
     const onAction = vi.fn();
     const { rerender } = render(<MobileToolbar language="ko" onAction={onAction} />);
     const idle = screen.getByTitle('선택 복사');
     expect(idle).toHaveAttribute('aria-pressed', 'false');
     rerender(<MobileToolbar language="ko" viewOnly onAction={onAction} />);
-    const done = screen.getByTitle('선택 끝');
+    const done = screen.getByTitle('선택 복사 종료');
     expect(done).toHaveAttribute('aria-pressed', 'true');
-    expect(done.textContent).toBe('선택 끝');
+    expect(done.textContent).toBe('선택 복사 종료');
     fireEvent.click(done);
     expect(onAction).toHaveBeenCalledExactlyOnceWith('copy');
   });
