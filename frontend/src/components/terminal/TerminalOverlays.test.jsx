@@ -177,6 +177,16 @@ describe('TerminalContextMenu', () => {
     expect(props.onCopy).not.toHaveBeenCalled();
   });
 
+  it('모바일 선택 모드에서는 같은 항목이 "선택 끝" 이 되어 모드를 끝낸다', () => {
+    const props = { ...baseProps(), isMobile: true, readOnly: true, onExitSelectMode: vi.fn() };
+    render(<TerminalContextMenu {...props} />);
+    expect(screen.queryByRole('button', { name: 'mobileCopySelection' })).toBeNull();
+    const done = screen.getByRole('button', { name: 'mobileSelectDone' });
+    expect(done).not.toBeDisabled();
+    fireEvent.click(done);
+    expect(props.onExitSelectMode).toHaveBeenCalledTimes(1);
+  });
+
   it('선택이 있으면 모바일 입력 모드에서도 바로 복사한다', () => {
     const props = { ...baseProps(), isMobile: true, readOnly: false, hasSelection: true, onEnterSelectMode: vi.fn() };
     render(<TerminalContextMenu {...props} />);

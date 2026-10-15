@@ -851,10 +851,15 @@ function App() {
     setMobileViewOnly(true);
     setNotification({ isOpen: true, message: t('mobileSelectionHint'), type: 'info' });
   });
+  const exitMobileSelectMode = useEvent(() => { enableMobileInput(false); });
   useEffect(() => {
     window.addEventListener('iterm:mobile-select-mode', enterMobileSelectMode);
-    return () => window.removeEventListener('iterm:mobile-select-mode', enterMobileSelectMode);
-  }, [enterMobileSelectMode]);
+    window.addEventListener('iterm:mobile-select-done', exitMobileSelectMode);
+    return () => {
+      window.removeEventListener('iterm:mobile-select-mode', enterMobileSelectMode);
+      window.removeEventListener('iterm:mobile-select-done', exitMobileSelectMode);
+    };
+  }, [enterMobileSelectMode, exitMobileSelectMode]);
   const openCommandInput = useEvent(() => {
     if (isMobile && mobileViewOnly) { enableMobileInput(true); return; }
     setCommandInputOpen(true);
@@ -1258,8 +1263,12 @@ function App() {
               });
               if (type === 'copy') {
                 const sel = session.getSelection?.();
-                if (sel) copyAndTell(sel);
-                else if (isMobile && !mobileViewOnly) enterMobileSelectMode();
+                // In select mode this key is "Done selecting": copy what's selected, then leave.
+                if (isMobile && mobileViewOnly) {
+                  if (sel) copyAndTell(sel);
+                  enableMobileInput(false);
+                } else if (sel) copyAndTell(sel);
+                else if (isMobile) enterMobileSelectMode();
                 else setNotification({ isOpen: true, message: isMobile && mobileViewOnly ? t('mobileSelectionHint') : (t('noSelection') || 'No text selected'), type: 'info' });
               } else if (type === 'copyAll') {
                 const text = session.getBufferText?.() || '';

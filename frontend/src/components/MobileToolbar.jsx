@@ -221,7 +221,18 @@ const MobileToolbar = ({
   const renderItem = (k, idx) => {
     if (k.kind === 'sep') return <Divider key={k.id || `sep-${idx}`} />;
 
-    if (k.kind === 'copy' || k.kind === 'copyAll' || k.kind === 'scrollToBottom') {
+    // Copy enters select mode when nothing is selected; in select mode the same key is the way out.
+    if (k.kind === 'copy') {
+      const label = t(viewOnly ? 'mobileSelectDone' : 'mobileCopySelection');
+      return (
+        <Key key={k.id} tone={k.tone} active={viewOnly} aria-pressed={viewOnly} title={label}
+          onClick={() => onAction?.(k.kind)}>
+          {viewOnly ? <span>{label}</span> : renderKeyContent(k)}
+        </Key>
+      );
+    }
+
+    if (k.kind === 'copyAll' || k.kind === 'scrollToBottom') {
       return (
         <Key key={k.id} tone={k.tone} title={t(k.kind)} onClick={() => onAction?.(k.kind)}>
           {renderKeyContent(k)}

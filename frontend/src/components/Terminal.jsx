@@ -2372,6 +2372,12 @@ const TerminalComponent = forwardRef(({ sessionId, hostId, isMobile = false, tmu
             if (sel) copyTextToClipboard(sel);
             setContextMenu(null);
           }}
+          onExitSelectMode={isMobile ? () => {
+            const sel = xtermRef.current?.getSelection();
+            if (sel) copyTextToClipboard(sel);
+            setContextMenu(null);
+            window.dispatchEvent(new CustomEvent('iterm:mobile-select-done'));
+          } : undefined}
           onEnterSelectMode={isMobile ? () => {
             setContextMenu(null);
             window.dispatchEvent(new CustomEvent('iterm:mobile-select-mode'));
