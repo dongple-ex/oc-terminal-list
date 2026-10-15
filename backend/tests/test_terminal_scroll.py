@@ -187,10 +187,11 @@ while True:
         self.state(lines=2, col=9999, row=9999)
         self.assert_received(b"\x1b[<64;7;8M" * 3 + b"\x1b[<65;80;20M" * 2)
 
-    def test_explicit_bottom_delivers_one_escape(self):
+    # Ctrl+End, not Esc: claude's own "Jump to bottom" key; Esc interrupts a running agent.
+    def test_explicit_bottom_delivers_ctrl_end(self):
         self.start("sgr")
         self.state(action="bottom")
-        self.assert_received(b"\x1b")
+        self.assert_received(b"\x1b[1;5F")
 
     def test_input_mode_restore_does_not_deliver_escape(self):
         self.start("sgr")
@@ -198,12 +199,12 @@ while True:
         time.sleep(0.1)
         self.assertFalse(os.path.exists(self.receipt))
 
-    def test_bottom_leaves_copy_mode_before_delivering_escape(self):
+    def test_bottom_leaves_copy_mode_before_delivering_ctrl_end(self):
         self.start("sgr")
         subprocess.check_call([*self.base, "copy-mode", "-t", "=app:"], env=self.env)
         self.assertEqual(self.state()["target"], "history")
         self.assertEqual(self.state(action="bottom")["target"], "application")
-        self.assert_received(b"\x1b")
+        self.assert_received(b"\x1b[1;5F")
 
     def test_bottom_does_not_send_escape_after_mouse_is_disabled(self):
         self.start("sgr")
@@ -337,14 +338,14 @@ class ScrollAuthorizationTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(error.exception.status_code, 404)
             spawn.assert_not_called()
 
-    async def test_remote_bottom_uses_the_owned_host_and_fixed_escape(self):
+    async def test_remote_bottom_uses_the_owned_host_and_fixed_ctrl_end(self):
         with (patch("routes.terminal_scroll.resolve_host_with_secrets",
                     AsyncMock(return_value=({"id": "h"}, {}))) as resolve,
               patch("routes.terminal_scroll.run_remote_cmd_pooled",
                     AsyncMock(return_value=(0, "%1|0|0|24||1|1|80|0", ""))) as run):
             await scroll_terminal("me", "app", "h", action="bottom")
             resolve.assert_awaited_once_with("h", "me")
-            self.assertIn('"send-keys -t $pane -H 1b"', run.call_args.args[2])
+            self.assertIn('"send-keys -t $pane C-End"', run.call_args.args[2])
             self.assertIn("if-shell -F", run.call_args.args[2])
 
     async def test_remote_wheel_uses_the_owned_host_and_same_guarded_script(self):

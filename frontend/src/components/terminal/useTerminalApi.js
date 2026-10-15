@@ -12,11 +12,6 @@ import { pushCommand as pushCommandHistory } from '../../utils/commandHistory';
  * 전부 ref 위에서만 동작한다 — 렌더 상태를 읽지 않으므로 WS/xterm 이 재생성돼도
  * 콜백 정체성이 유지되고, 여기서 나가는 함수들이 stale 해지지 않는다.
  */
-// Wheel-down reports for "scroll to bottom" in a mouse app: 8 x 24 = 192 notches, paced.
-const BOTTOM_WHEEL_CHUNK = 24;
-const BOTTOM_WHEEL_CHUNKS = 8;
-const BOTTOM_WHEEL_INTERVAL_MS = 40;
-
 const useTerminalApi = ({ refs, forwardedRef, sessionId, paneId, tabId, isReady }) => {
   const {
     xtermRef, wsRef, searchAddonRef, iosHangulRef, inputPreviewRef,
@@ -87,33 +82,16 @@ const useTerminalApi = ({ refs, forwardedRef, sessionId, paneId, tabId, isReady 
 
   const getSelection = useCallback(() => xtermRef.current?.getSelection() || '', [xtermRef]);
 
-  // Mouse apps (claude, opencode) scroll their own transcript, out of tmux's reach. Roll the
-  // wheel down in paced chunks — a single huge burst floods tmux and the app's renderer.
-  const rollWheelToBottom = useCallback(() => {
-    const term = xtermRef.current;
-    const mode = term?.modes?.mouseTrackingMode;
-    if (!term || !mode || mode === 'none') return;
-    const col = Math.max(1, Math.floor((term.cols || 2) / 2));
-    const row = Math.max(1, Math.floor((term.rows || 2) / 2));
-    const chunk = `\x1b[<65;${col};${row}M`.repeat(BOTTOM_WHEEL_CHUNK);
-    for (let i = 0; i < BOTTOM_WHEEL_CHUNKS; i++) {
-      setTimeout(() => {
-        if (!readOnlyRef?.current) enqueueInputRef.current?.(chunk, { delay: 0 });
-      }, i * BOTTOM_WHEEL_INTERVAL_MS);
-    }
-  }, [xtermRef, readOnlyRef, enqueueInputRef]);
-
   const scrollToBottom = useCallback(() => {
     if (readOnlyRef?.current) {
       xtermRef.current?.clearSelection();
       return finishViewingRef?.current?.({ toBottom: true }) ?? false;
     }
     forceScrollToBottomRef.current?.();
-    rollWheelToBottom();
-    // tmux scrolls in its own copy-mode, invisible to xterm, so leave that too. Plain offset 0,
-    // not the view-mode "bottom" action: that sends Esc to a mouse app and interrupts an agent.
-    return finishViewingRef?.current?.() ?? true;
-  }, [forceScrollToBottomRef, readOnlyRef, finishViewingRef, xtermRef, rollWheelToBottom]);
+    // tmux copy-mode and mouse apps (claude) scroll out of xterm's sight. The server's bottom
+    // action leaves copy-mode and sends Ctrl+End to a mouse app — its own "jump to bottom".
+    return finishViewingRef?.current?.({ toBottom: true }) ?? true;
+  }, [forceScrollToBottomRef, readOnlyRef, finishViewingRef, xtermRef]);
 
   /* 페이지/라인 단위 스크롤 — xterm 의 클라이언트 스크롤백만 만진다.
      PgUp/PgDn escape 를 PTY 로 보내면 셸/에디터가 해석 못 해 `^[[5~` 가 파일에 박힌다.

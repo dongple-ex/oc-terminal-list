@@ -409,7 +409,7 @@ describe('Terminal', () => {
 
       expect(ok).toBe(true);
       const call = global.fetch.mock.calls.find(([url]) => String(url).startsWith('/api/terminal-scroll'));
-      expect(JSON.parse(call[1].body)).toMatchObject({ session_id: 'mobile-abc', host_id: 'h1', offset: 0 });
+      expect(JSON.parse(call[1].body)).toMatchObject({ session_id: 'mobile-abc', host_id: 'h1', action: 'bottom' });
     });
 
     it('passes the exact view-mode selection and source to quick input without sending terminal input', async () => {

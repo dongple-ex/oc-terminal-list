@@ -106,8 +106,9 @@ def scroll_script(base: list[str], session: str, offset: int | None = None, incl
         script += f'  state=$(run_seek {queue}send-keys -t "$pane" -X -N "$count" scroll-up{final}) || exit 1\n'
         script += 'fi\nfi\n'
     if action == "bottom":
+        # Ctrl+End is claude's own "Jump to bottom"; Esc would interrupt a running agent.
         script += f'  {tmux} if-shell -F -t "$pane" \'#{{&&:#{{==:#{{pane_mode}},}},#{{mouse_any_flag}}}}\''
-        script += ' "send-keys -t $pane -H 1b" || exit 1\n'
+        script += ' "send-keys -t $pane C-End" || exit 1\n'
         script += f'state=$({tmux} display-message -p -t "$pane" {shlex.quote(FORMAT)}) || exit 1\n'
     script += 'printf "%s\\n" "$state"'
     if include_input:
