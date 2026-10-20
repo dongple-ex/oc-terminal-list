@@ -448,6 +448,18 @@ describe('Terminal', () => {
       expect(paste).toHaveBeenCalledExactlyOnceWith(text);
     });
 
+    it('clears the completed selection when leaving mobile copy mode', async () => {
+      renderTerminal({ isMobile: true,
+        settings: { ...testSettings(), language: 'ko', mobileViewOnly: true } });
+      await openSocket();
+      harness.term.hasSelection.mockReturnValue(true);
+      harness.term.getSelection.mockReturnValue('selected output');
+      const clear = vi.spyOn(harness.term, 'clearSelection');
+      fireEvent.mouseDown(harness.term.element, { button: 2, clientX: 30, clientY: 40 });
+      fireEvent.click(await screen.findByText('선택 복사 종료'));
+      expect(clear).toHaveBeenCalled();
+    });
+
     it('pastes the selected text into the mobile prompt through the input-mode guard', async () => {
       renderTerminal({ isMobile: true,
         settings: { ...testSettings(), language: 'ko', mobileViewOnly: true } });

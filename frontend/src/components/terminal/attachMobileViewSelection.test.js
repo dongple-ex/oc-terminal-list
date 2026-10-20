@@ -49,6 +49,41 @@ describe('mobile view selection', () => {
     expect(term.select).toHaveBeenLastCalledWith(2, 0, 8);
     expect(scroll).not.toHaveBeenCalled();
   });
+  it('extends a completed selection on later drags in both directions and across rows', () => {
+    term.getSelectionPosition = () => {
+      const [col, row, length] = term.select.mock.calls.at(-1) || [];
+      if (length === undefined) { return undefined; }
+      const end = row * term.cols + col + length;
+      return { start: { x: col, y: row }, end: { x: end % term.cols, y: Math.floor(end / term.cols) } };
+    };
+    touch('touchstart', 25, 10);
+    touch('touchmove', 65, 10);
+    touch('touchend', 65, 10);
+    expect(term.select).toHaveBeenLastCalledWith(3, 0, 4);
+    touch('touchstart', 65, 10);
+    touch('touchmove', 85, 10);
+    touch('touchend', 85, 10);
+    expect(term.select).toHaveBeenLastCalledWith(3, 0, 6);
+    touch('touchstart', 25, 10);
+    touch('touchmove', 5, 10);
+    touch('touchend', 5, 10);
+    expect(term.select).toHaveBeenLastCalledWith(1, 0, 8);
+    touch('touchstart', 85, 10);
+    touch('touchmove', 85, 30);
+    touch('touchend', 85, 30);
+    expect(term.select).toHaveBeenLastCalledWith(1, 0, 88);
+    expect(scroll).not.toHaveBeenCalled();
+  });
+
+  it('preserves an existing selection on another hold instead of replacing it with a word', () => {
+    term.getSelectionPosition = () => ({ start: { x: 0, y: 0 }, end: { x: 9, y: 0 } });
+    touch('touchstart', 65, 10);
+    vi.advanceTimersByTime(600);
+    touch('touchend', 65, 10);
+    expect(term.select).not.toHaveBeenCalled();
+    expect(term.clearSelection).not.toHaveBeenCalled();
+  });
+
   it('vertical swipes keep scrolling without opening links or selecting', () => {
     touch('touchstart', 150, 10);
     touch('touchmove', 150, 110);

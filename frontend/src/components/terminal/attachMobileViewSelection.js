@@ -36,9 +36,17 @@ export default function attachMobileViewSelection({ term, overlay, isReadOnly,
   // 단어 없이 끄는 드래그는 칸이 아니라 경계 사이를 고른다 — 손가락이 막 걸친 칸이
   // 끝에 하나 더 따라 들어가지 않게.
   const selectBetween = (p) => {
+    const edge = bufferEdgeFromClientPoint(p.x, p.y);
+    if (gesture.existing) {
+      const index = edge.row * term.cols + edge.col;
+      const first = Math.min(gesture.existing.start, index);
+      const last = Math.max(gesture.existing.end, index);
+      term.select(first % term.cols, Math.floor(first / term.cols), last - first);
+      return;
+    }
     const args = selectionArgsFromEdges(
-      bufferEdgeFromClientPoint(gesture.origin.x, gesture.origin.y),
-      bufferEdgeFromClientPoint(p.x, p.y),
+      gesture.startEdge,
+      edge,
       term.cols,
     );
     if (args) term.select(args.column, args.row, args.length);
@@ -65,8 +73,14 @@ export default function attachMobileViewSelection({ term, overlay, isReadOnly,
   };
   const start = (p, kind) => {
     cancel();
-    gesture = { kind, origin: p, last: p, anchor: cellAt(p), selecting: false, scrolling: false };
-    if (kind === 'touch') holdTimer = setTimeout(selectWord, HOLD_MS);
+    const position = term.getSelectionPosition?.();
+    const existing = position ? {
+      start: position.start.y * term.cols + position.start.x,
+      end: position.end.y * term.cols + position.end.x,
+    } : null;
+    gesture = { kind, origin: p, last: p, anchor: cellAt(p), existing,
+      startEdge: bufferEdgeFromClientPoint(p.x, p.y), selecting: !!existing, scrolling: false };
+    if (kind === 'touch' && !existing) { holdTimer = setTimeout(selectWord, HOLD_MS); }
   };
   const move = (p, event) => {
     if (!gesture || !isReadOnly()) { cancel(); return; }
