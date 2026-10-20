@@ -616,6 +616,54 @@ describe('attachTerminalInteractions', () => {
       expect(length).toBe(2 * 80 + (15 - 5)); // 두 줄 + 10칸, 끝 경계 뒤 칸은 넣지 않는다
     });
 
+    it.each([-20, 420])('창 밖 y=%s에서 스크롤하며 선택을 이어가고 복사 후 멈춘다', (y) => {
+      vi.useFakeTimers();
+      try {
+        term.buffer.active.viewportY = 50;
+        term.scrollLines.mockImplementation((lines) => { term.buffer.active.viewportY += lines; });
+        mount();
+        down(50, 50);
+        move(150, y);
+        const initial = term.select.mock.calls.at(-1);
+        vi.advanceTimersByTime(200);
+        expect(term.scrollLines).toHaveBeenCalled();
+        expect(Math.sign(term.scrollLines.mock.calls[0][0])).toBe(y < 0 ? -1 : 1);
+        expect(term.select.mock.calls.at(-1)[2]).toBeGreaterThan(initial[2]);
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+        const count = term.scrollLines.mock.calls.length;
+        vi.advanceTimersByTime(200);
+        expect(term.scrollLines).toHaveBeenCalledTimes(count);
+      } finally {
+        handle?.detach();
+        handle = null;
+        vi.useRealTimers();
+      }
+    });
+
+    it.each(['inside', 'blur', 'released', 'detach'])('자동 스크롤 중단: %s', (reason) => {
+      vi.useFakeTimers();
+      try {
+        mount();
+        down(50, 50);
+        move(150, 420);
+        vi.advanceTimersByTime(100);
+        expect(term.scrollLines).toHaveBeenCalled();
+        if (reason === 'inside') { move(150, 200); }
+        if (reason === 'blur') { window.dispatchEvent(new Event('blur')); }
+        if (reason === 'released') {
+          document.dispatchEvent(new MouseEvent('mousemove', { buttons: 0, bubbles: true }));
+        }
+        if (reason === 'detach') { handle.detach(); handle = null; }
+        const count = term.scrollLines.mock.calls.length;
+        vi.advanceTimersByTime(200);
+        expect(term.scrollLines).toHaveBeenCalledTimes(count);
+      } finally {
+        handle?.detach();
+        handle = null;
+        vi.useRealTimers();
+      }
+    });
+
     it('마우스 트래킹이 꺼져 있으면 xterm 기본 선택에 맡긴다', () => {
       term.modes.mouseTrackingMode = 'none';
       mount();

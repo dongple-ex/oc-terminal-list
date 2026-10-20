@@ -333,7 +333,33 @@ const attachTerminalInteractions = ({
      tmux/vim 이 마우스 트래킹을 켜도 PC 기본 UX 는 지킨다: 클릭은 앱으로 보내고,
      plain left-drag 가 임계값을 넘는 순간부터만 xterm 선택으로 전환한다. */
   let naturalSelection = null;
+  let naturalScrollTimer = null;
+  const stopNaturalScroll = () => {
+    clearInterval(naturalScrollTimer);
+    naturalScrollTimer = null;
+  };
+  const cancelNaturalSelection = () => {
+    stopNaturalScroll();
+    naturalSelection = null;
+  };
+  const updateNaturalSelection = () => {
+    const args = selectionArgsFromEdges(
+      naturalSelection.start,
+      bufferEdgeFromClientPoint(naturalSelection.x, naturalSelection.y),
+      term.cols,
+    );
+    if (args) { term.select(args.column, args.row, args.length); }
+    else { term.clearSelection(); }
+  };
+  const naturalScrollLines = () => {
+    const rect = term.element?.querySelector('.xterm-screen')?.getBoundingClientRect();
+    if (!rect || !naturalSelection) { return 0; }
+    const y = naturalSelection.y;
+    const outside = y < rect.top ? y - rect.top : Math.max(0, y - rect.top - rect.height);
+    return Math.sign(outside) * Math.min(5, Math.ceil(Math.abs(outside) / 20));
+  };
   const handleNaturalMouseDown = (e) => {
+    cancelNaturalSelection();
     const screen = term.element?.querySelector('.xterm-screen');
     if (!screen?.contains(e.target)) {
       naturalSelection = null;
@@ -355,24 +381,30 @@ const attachTerminalInteractions = ({
     };
   };
   const handleNaturalMouseMove = (e) => {
-    if (!naturalSelection || (e.buttons & 1) !== 1) return;
+    if (!naturalSelection) { return; }
+    if ((e.buttons & 1) !== 1) { cancelNaturalSelection(); return; }
     const dx = Math.abs(e.clientX - naturalSelection.startX);
     const dy = Math.abs(e.clientY - naturalSelection.startY);
     if (!naturalSelection.selecting && Math.max(dx, dy) < DRAG_SELECT_THRESHOLD_PX) return;
     naturalSelection.selecting = true;
     e.preventDefault();
     e.stopPropagation();
-    const args = selectionArgsFromEdges(
-      naturalSelection.start,
-      bufferEdgeFromClientPoint(e.clientX, e.clientY),
-      term.cols,
-    );
-    if (args) term.select(args.column, args.row, args.length);
+    naturalSelection.x = e.clientX;
+    naturalSelection.y = e.clientY;
+    updateNaturalSelection();
+    if (!naturalScrollLines()) {
+      stopNaturalScroll();
+    } else if (naturalScrollTimer === null) {
+      naturalScrollTimer = setInterval(() => {
+        term.scrollLines(naturalScrollLines());
+        updateNaturalSelection();
+      }, 50);
+    }
   };
   const handleNaturalMouseUp = (e) => {
     if (!naturalSelection) return;
     const wasSelecting = naturalSelection.selecting;
-    naturalSelection = null;
+    cancelNaturalSelection();
     if (!wasSelecting) return;
     e.preventDefault();
     e.stopPropagation();
@@ -473,6 +505,7 @@ const attachTerminalInteractions = ({
   container.addEventListener('touchstart', handleTouchStart, { passive: false });
   container.addEventListener('touchend', handleTouchEnd, { passive: true });
   container.addEventListener('touchcancel', handleTouchCancel);
+  window.addEventListener('blur', cancelNaturalSelection);
   document.addEventListener('mousemove', handleNaturalMouseMove, true);
   document.addEventListener('mouseup', handleNaturalMouseUp, true);
   // Bubble phase, after xterm has finished updating its selection.
@@ -494,6 +527,8 @@ const attachTerminalInteractions = ({
   return {
     detach: () => {
       viewSelection.detach();
+      cancelNaturalSelection();
+      window.removeEventListener('blur', cancelNaturalSelection);
       container.removeEventListener('mousedown', handleRightMouseDown, true);
       container.removeEventListener('contextmenu', handleContextMenu, true);
       container.removeEventListener('keydown', handleKeyDown);

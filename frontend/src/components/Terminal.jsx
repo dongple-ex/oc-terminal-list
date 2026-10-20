@@ -2412,6 +2412,18 @@ const TerminalComponent = forwardRef(({ sessionId, hostId, isMobile = false, tmu
               xtermRef.current.paste(text);
             }
           }}
+          onPasteSelectionToPrompt={() => {
+            const text = xtermRef.current?.getSelection();
+            setContextMenu(null);
+            if (!text || (!isMobile && readOnlyRef.current)) { return; }
+            if (isMobile && readOnlyRef.current) {
+              window.dispatchEvent(new CustomEvent('iterm:paste-to-terminal', {
+                detail: { text, sessionId },
+              }));
+            } else {
+              xtermRef.current?.paste(text);
+            }
+          }}
           onPasteToInput={async () => {
             let text;
             try { text = await navigator.clipboard.readText(); }

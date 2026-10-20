@@ -213,6 +213,18 @@ describe('TerminalContextMenu', () => {
     expect(screen.queryByRole('button', { name: 'registerKeyCombination' })).toBeNull();
   });
 
+  it('enables prompt paste only with a selection and an available input mode', () => {
+    const onPasteSelectionToPrompt = vi.fn();
+    const props = { ...baseProps(), onPasteSelectionToPrompt };
+    const { rerender } = render(<TerminalContextMenu {...props} hasSelection={false} />);
+    expect(screen.getByRole('button', { name: 'pasteSelectionToPrompt' })).toBeDisabled();
+    rerender(<TerminalContextMenu {...props} hasSelection readOnly />);
+    expect(screen.getByRole('button', { name: 'pasteSelectionToPrompt' })).toBeDisabled();
+    rerender(<TerminalContextMenu {...props} hasSelection readOnly isMobile />);
+    fireEvent.click(screen.getByRole('button', { name: 'pasteSelectionToPrompt' }));
+    expect(onPasteSelectionToPrompt).toHaveBeenCalledOnce();
+  });
+
   it('offers selection in quick input in view mode and invokes it explicitly', () => {
     const onUseSelection = vi.fn();
     render(<TerminalContextMenu {...baseProps()} readOnly hasSelection onUseSelection={onUseSelection} />);

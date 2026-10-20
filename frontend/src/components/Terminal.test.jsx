@@ -436,6 +436,38 @@ describe('Terminal', () => {
       }
     });
 
+    it('pastes the desktop selection into the prompt without appending Enter', async () => {
+      renderTerminal({ settings: { ...testSettings(), language: 'ko' } });
+      await openSocket();
+      const text = 'selected output';
+      harness.term.hasSelection.mockReturnValue(true);
+      harness.term.getSelection.mockReturnValue(text);
+      const paste = vi.spyOn(harness.term, 'paste');
+      fireEvent.mouseDown(harness.term.element, { button: 2, clientX: 30, clientY: 40 });
+      fireEvent.click(await screen.findByText('프롬프트로 붙여넣기'));
+      expect(paste).toHaveBeenCalledExactlyOnceWith(text);
+    });
+
+    it('pastes the selected text into the mobile prompt through the input-mode guard', async () => {
+      renderTerminal({ isMobile: true,
+        settings: { ...testSettings(), language: 'ko', mobileViewOnly: true } });
+      const ws = await openSocket();
+      const text = 'selected output';
+      harness.term.hasSelection.mockReturnValue(true);
+      harness.term.getSelection.mockReturnValue(text);
+      const listener = vi.fn();
+      window.addEventListener('iterm:paste-to-terminal', listener);
+      try {
+        fireEvent.mouseDown(harness.term.element, { button: 2, clientX: 30, clientY: 40 });
+        fireEvent.click(await screen.findByText('프롬프트로 붙여넣기'));
+        expect(listener).toHaveBeenCalledOnce();
+        expect(listener.mock.calls[0][0].detail).toEqual({ text, sessionId: 'sess-1' });
+        expect(ws.sent.some(data => typeof data === 'string' && !data.startsWith('{'))).toBe(false);
+      } finally {
+        window.removeEventListener('iterm:paste-to-terminal', listener);
+      }
+    });
+
     it.each([false, true])('pastes mobile clipboard text into quick input with denied permission=%s and offers bottom scrolling', async (denied) => {
       renderTerminal({ paneId: 'source-pane', tabId: 'source-tab', isMobile: true,
         settings: { ...testSettings(), language: 'ko', mobileViewOnly: true } });
@@ -453,7 +485,7 @@ describe('Terminal', () => {
         expect(await screen.findByText('맨 아래로 스크롤')).toBeInTheDocument();
         expect(screen.getByText('붙여넣기')).toBeInTheDocument();
         expect(screen.queryByText('조합키 등록')).toBeNull();
-        fireEvent.click(screen.getByText('빠른 입력에 붙여넣기'));
+        fireEvent.click(screen.getByText('빠른입력창열기'));
         await waitFor(() => expect(listener).toHaveBeenCalledOnce());
         expect(listener.mock.calls[0][0].detail).toEqual({ text: 'clipboard\n', sessionId: 'sess-1', paneId: 'source-pane', tabId: 'source-tab' });
         expect(ws.sent.some(data => typeof data === 'string' && !data.startsWith('{'))).toBe(false);
