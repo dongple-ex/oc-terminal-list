@@ -213,13 +213,15 @@ describe('TerminalContextMenu', () => {
     expect(screen.queryByRole('button', { name: 'registerKeyCombination' })).toBeNull();
   });
 
-  it('enables prompt paste only with a selection and an available input mode', () => {
+  it('shows prompt paste only on mobile and requires a selection', () => {
     const onPasteSelectionToPrompt = vi.fn();
     const props = { ...baseProps(), onPasteSelectionToPrompt };
-    const { rerender } = render(<TerminalContextMenu {...props} hasSelection={false} />);
+    const { rerender } = render(<TerminalContextMenu {...props} hasSelection={false} isMobile />);
     expect(screen.getByRole('button', { name: 'pasteSelectionToPrompt' })).toBeDisabled();
     rerender(<TerminalContextMenu {...props} hasSelection readOnly />);
-    expect(screen.getByRole('button', { name: 'pasteSelectionToPrompt' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'pasteSelectionToPrompt' })).toBeNull();
+    rerender(<TerminalContextMenu {...props} hasSelection />);
+    expect(screen.queryByRole('button', { name: 'pasteSelectionToPrompt' })).toBeNull();
     rerender(<TerminalContextMenu {...props} hasSelection readOnly isMobile />);
     fireEvent.click(screen.getByRole('button', { name: 'pasteSelectionToPrompt' }));
     expect(onPasteSelectionToPrompt).toHaveBeenCalledOnce();

@@ -246,9 +246,9 @@ export const TerminalContextMenu = ({ x, y, hasSelection, linkUrl, themeUi, t, o
   if (isMobile || !readOnly) {
     items.push({ icon: ClipboardPaste, label: t('paste') || 'Paste', action: onPaste });
   }
-  if (onPasteSelectionToPrompt) {
+  if (isMobile && onPasteSelectionToPrompt) {
     items.push({ icon: ClipboardPaste, label: t('pasteSelectionToPrompt') || 'Paste into prompt',
-      action: onPasteSelectionToPrompt, disabled: !hasSelection || (readOnly && !isMobile) });
+      action: onPasteSelectionToPrompt, disabled: !hasSelection });
   }
   if (onPasteToInput) {
     items.push({ icon: ClipboardPaste, label: t('pasteToInput') || 'Open Quick Input', action: onPasteToInput });

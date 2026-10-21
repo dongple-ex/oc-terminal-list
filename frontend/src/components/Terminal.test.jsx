@@ -436,7 +436,7 @@ describe('Terminal', () => {
       }
     });
 
-    it('pastes the desktop selection into the prompt without appending Enter', async () => {
+    it('hides prompt paste on desktop while keeping regular paste and quick input', async () => {
       renderTerminal({ settings: { ...testSettings(), language: 'ko' } });
       await openSocket();
       const text = 'selected output';
@@ -444,8 +444,10 @@ describe('Terminal', () => {
       harness.term.getSelection.mockReturnValue(text);
       const paste = vi.spyOn(harness.term, 'paste');
       fireEvent.mouseDown(harness.term.element, { button: 2, clientX: 30, clientY: 40 });
-      fireEvent.click(await screen.findByText('프롬프트로 붙여넣기'));
-      expect(paste).toHaveBeenCalledExactlyOnceWith(text);
+      expect(await screen.findByText('빠른입력창열기')).toBeInTheDocument();
+      expect(screen.getByText('붙여넣기')).toBeInTheDocument();
+      expect(screen.queryByText('프롬프트로 붙여넣기')).toBeNull();
+      expect(paste).not.toHaveBeenCalled();
     });
 
     it('clears the completed selection when leaving mobile copy mode', async () => {
